@@ -1,23 +1,16 @@
-- hosts: masters
+- hosts: all
   become: yes
   vars:
-    k8s_version: 1.25.0
+    k8s_version: 1.25.2-00
   tasks:
-
-  #  - name: disable firewall service for labs
-  #    service:
-  #       name: firewalld
-  #       state: stopped
-  #       enabled: false
-
-    - name: Disable SWAP 
+    - name: Disable SWAP
       shell: |
         swapoff -a
 
-    - name: Disable SWAP in fstab 
+    - name: Disable SWAP in fstab
       lineinfile:
         path: /etc/fstab
-        regexp: 'swap'
+        regexp: "swap"
         state: absent
 
     - name: install Docker
@@ -43,7 +36,7 @@
           get_url:
             url: https://storage.googleapis.com/golang/getgo/installer_linux
             dest: installer_linux
-            mode: '0700'
+            mode: "0700"
         - name: Install Go
           shell: |
             ./installer_linux
@@ -70,25 +63,25 @@
             path: ~/cri-dockerd
             state: absent
 
-  #  - name: disable SELinux
-  #    command: setenforce 0
-  #    ignore_errors: yes
+    #  - name: disable SELinux
+    #    command: setenforce 0
+    #    ignore_errors: yes
 
-  #  - name: disable SELinux on reboot
-  #    selinux:
-  #      state: disabled
+    #  - name: disable SELinux on reboot
+    #    selinux:
+    #      state: disabled
 
-  #  - name: ensure net.bridge.bridge-nf-call-ip6tables is set to 1
-  #    sysctl:
-  #     name: net.bridge.bridge-nf-call-ip6tables
-  #     value: 1
-  #     state: present
+    #  - name: ensure net.bridge.bridge-nf-call-ip6tables is set to 1
+    #    sysctl:
+    #     name: net.bridge.bridge-nf-call-ip6tables
+    #     value: 1
+    #     state: present
 
-  #  - name: ensure net.bridge.bridge-nf-call-iptables is set to 1
-  #    sysctl:
-  #     name: net.bridge.bridge-nf-call-iptables
-  #     value: 1
-  #     state: present
+    #  - name: ensure net.bridge.bridge-nf-call-iptables is set to 1
+    #    sysctl:
+    #     name: net.bridge.bridge-nf-call-iptables
+    #     value: 1
+    #     state: present
 
     # - name: add Kubernetes APT repository
     #   apt_repository:
@@ -105,7 +98,7 @@
           - curl
         state: present
 
-    - name: add Kubernetes APT repository
+    - name: Add Kubernetes APT repository
       block:
         - name: Download the Google Cloud public signing key
           get_url:
@@ -123,15 +116,13 @@
           - kubeadm={{ k8s_version }}
           - kubectl={{ k8s_version }}
         state: present
-  
+        update_cache: yes
+
     - name: start kubelet
       service:
         name: kubelet
         enabled: yes
         state: started
 
-- hosts: all
-  become: yes
-  tasks:
-   - name: reboot ALL machines
-     reboot:
+    - name: reboot ALL machines
+      reboot:

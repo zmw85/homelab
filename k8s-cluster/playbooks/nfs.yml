@@ -1,0 +1,59 @@
+---
+- name: nfs
+  hosts: vm-ubuntu-3.home.io
+  vars:
+    user: zmw85
+    mountable_parent_folder: "/nfs"
+    mountable_folders:
+      - plex
+      - home-assistant
+  tasks:
+    - name: install nfs-kernel-server, rpcbind
+      become: yes
+      apt:
+        name:
+          - nfs-kernel-server
+          - rpcbind
+        update_cache: yes
+        state: latest
+    - name: Create mountable directories if they don't exist
+      become: yes
+      file:
+        path: "{{ mountable_parent_folder }}/{{ item }}"
+        state: directory
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        recurse: yes
+        mode: '0775'
+      with_items: "{{mountable_folders}}"
+    - name: Ensure NFS configuraation file
+      become: yes
+      copy:
+        dest: /etc/exports
+        content: |
+          {% for item in mountable_folders %}
+          {{ mountable_parent_folder }}/{{ item }} *.home.io(rw,sync,no_subtree_check)
+          {% endfor %}
+    - name: Remove /lib/systemd/system/nfs-common.service sysmlink
+      file:
+        path: /lib/systemd/system/nfs-common.service
+        state: absent
+    - name: Reload & Enable nfs-kernel-server service
+      become: yes
+      service:
+        name: nfs-kernel-server
+        state: reloaded
+        enabled: yes
+    - name: Reload & Enable rpcbind service
+      become: yes
+      service:
+        name: rpcbind
+        state: restarted
+        enabled: yes
+    - name: Start / restart nfs-common service
+      become: yes
+      service:
+        name: nfs-common
+        state: restarted
+        enabled: yes
+    

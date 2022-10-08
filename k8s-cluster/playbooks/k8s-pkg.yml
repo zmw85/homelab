@@ -1,0 +1,137 @@
+- hosts: masters
+  become: yes
+  vars:
+    k8s_version: 1.25.0
+  tasks:
+
+  #  - name: disable firewall service for labs
+  #    service:
+  #       name: firewalld
+  #       state: stopped
+  #       enabled: false
+
+    - name: Disable SWAP 
+      shell: |
+        swapoff -a
+
+    - name: Disable SWAP in fstab 
+      lineinfile:
+        path: /etc/fstab
+        regexp: 'swap'
+        state: absent
+
+    - name: install Docker
+      apt:
+        name:
+          - docker.io
+        state: present
+
+    - name: start Docker
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: install cri-dockerd
+      block:
+        - name: Get "cri-dockerd"
+          git:
+            repo: https://github.com/Mirantis/cri-dockerd.git
+            dest: ./cri-dockerd
+            single_branch: yes
+        - name: Get Go installer
+          get_url:
+            url: https://storage.googleapis.com/golang/getgo/installer_linux
+            dest: installer_linux
+            mode: '0700'
+        - name: Install Go
+          shell: |
+            ./installer_linux
+            . ~/.bash_profile
+        - name: Compile & Install "cri-dockerd"
+          shell: |
+            mkdir -p bin
+            ~/.go/bin/go build -o bin/cri-dockerd -buildvcs=false
+            mkdir -p /usr/local/bin
+            install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
+            cp -a packaging/systemd/* /etc/systemd/system
+            sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
+            systemctl daemon-reload
+            systemctl enable cri-docker.service
+            systemctl enable --now cri-docker.socket
+          args:
+            chdir: cri-dockerd/
+        - name: clean up "installer_linux"
+          file:
+            path: ~/installer_linux
+            state: absent
+        - name: clean up "installer_linux"
+          file:
+            path: ~/cri-dockerd
+            state: absent
+
+  #  - name: disable SELinux
+  #    command: setenforce 0
+  #    ignore_errors: yes
+
+  #  - name: disable SELinux on reboot
+  #    selinux:
+  #      state: disabled
+
+  #  - name: ensure net.bridge.bridge-nf-call-ip6tables is set to 1
+  #    sysctl:
+  #     name: net.bridge.bridge-nf-call-ip6tables
+  #     value: 1
+  #     state: present
+
+  #  - name: ensure net.bridge.bridge-nf-call-iptables is set to 1
+  #    sysctl:
+  #     name: net.bridge.bridge-nf-call-iptables
+  #     value: 1
+  #     state: present
+
+    # - name: add Kubernetes APT repository
+    #   apt_repository:
+    #     name: Kubernetes
+    #     description: Kubernetes APT repository
+    #     baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+    #     gpgkey: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    #     gpgcheck: yes
+    - name: Install dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+        state: present
+
+    - name: add Kubernetes APT repository
+      block:
+        - name: Download the Google Cloud public signing key
+          get_url:
+            url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+            dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+        - name: Add the Kubernetes apt repository
+          apt_repository:
+            repo: "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+            state: present
+
+    - name: Install kubelet, kubeadm, kubectl
+      apt:
+        name:
+          - kubelet={{ k8s_version }}
+          - kubeadm={{ k8s_version }}
+          - kubectl={{ k8s_version }}
+        state: present
+  
+    - name: start kubelet
+      service:
+        name: kubelet
+        enabled: yes
+        state: started
+
+- hosts: all
+  become: yes
+  tasks:
+   - name: reboot ALL machines
+     reboot:

@@ -1,0 +1,10 @@
+[masters]
+vm-ubuntu-0.home.io
+
+[workers]
+vm-ubuntu-1.home.io
+vm-ubuntu-2.home.io
+
+[all:vars]
+ansible_become_method=sudo
+ansible_user=zmw85

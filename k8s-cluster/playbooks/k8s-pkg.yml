@@ -63,33 +63,6 @@
             path: ~/cri-dockerd
             state: absent
 
-    #  - name: disable SELinux
-    #    command: setenforce 0
-    #    ignore_errors: yes
-
-    #  - name: disable SELinux on reboot
-    #    selinux:
-    #      state: disabled
-
-    #  - name: ensure net.bridge.bridge-nf-call-ip6tables is set to 1
-    #    sysctl:
-    #     name: net.bridge.bridge-nf-call-ip6tables
-    #     value: 1
-    #     state: present
-
-    #  - name: ensure net.bridge.bridge-nf-call-iptables is set to 1
-    #    sysctl:
-    #     name: net.bridge.bridge-nf-call-iptables
-    #     value: 1
-    #     state: present
-
-    # - name: add Kubernetes APT repository
-    #   apt_repository:
-    #     name: Kubernetes
-    #     description: Kubernetes APT repository
-    #     baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-    #     gpgkey: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-    #     gpgcheck: yes
     - name: Install dependencies
       apt:
         name:

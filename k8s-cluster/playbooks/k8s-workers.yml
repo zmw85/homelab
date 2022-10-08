@@ -1,4 +1,4 @@
-- hosts: master.example.com
+- hosts: masters
   become: yes
   gather_facts: false
   tasks:
@@ -14,7 +14,7 @@
   become: yes
   tasks:
     - name: join cluster
-      shell: "{{ hostvars['master.example.com'].join_command }} --ignore-preflight-errors all  >> node_joined.txt"
+      shell: "{{ hostvars['masters'].join_command }} --ignore-preflight-errors all >> node_joined.txt"
       args:
         chdir: $HOME
         creates: node_joined.txt

@@ -20,10 +20,11 @@
 
     - name: Install Pod network
       become: yes
-      shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.txt
+      # shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.txt
+      shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
       args:
         chdir: $HOME
-        creates: pod_network_setup.txt
+        # creates: pod_network_setup.txt
 
     - name: Insure "/run/flannel/" directory exist
       file:

@@ -1,0 +1,79 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qbittorrent
+  labels:
+    app: qbittorrent
+spec:
+  containers:
+    - name: qbittorrent
+      image: lscr.io/linuxserver/qbittorrent:4.4.5
+      resources:
+        limits:
+          cpu: 2
+          memory: 1Gi
+      ports:
+        - name: web-ui
+          containerPort: 8080
+        - name: bittorrent-tcp
+          containerPort: 6881
+        - name: bittorrent-udp
+          containerPort: 6881
+          protocol: UDP
+      volumeMounts:
+        - name: nfs-qbittorrent
+          mountPath: /config
+          subPath: config
+        - name: nfs-qbittorrent
+          mountPath: /downloads
+          subPath: downloads
+      env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: Australia/Sydney
+        - name: WEBUI_PORT
+          value: "8080"
+  volumes:
+    - name: nfs-qbittorrent
+      nfs:
+        server: vm-ubuntu-3.home.io
+        path: /nfs/qbittorrent
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent-service
+spec:
+  clusterIP: 
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: web-ui
+  selector:
+    app: qbittorrent
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qbittorrent-ingress
+  annotations:
+    kubernetes.io/ingress.class: haproxy
+spec:
+  rules:
+    - host: "qb.home.io"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: qbittorrent-service
+                port:
+                  number: 80

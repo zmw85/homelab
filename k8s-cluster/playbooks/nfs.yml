@@ -1,12 +1,13 @@
 ---
 - name: nfs
-  hosts: vm-ubuntu-3.home.io
+  hosts: nfs-servers
   vars:
     user: zmw85
     mountable_parent_folder: "/nfs"
     mountable_folders:
       - plex
       - home-assistant
+      - qbittorrent
   tasks:
     - name: install nfs-kernel-server, rpcbind
       become: yes
@@ -56,4 +57,3 @@
         name: nfs-common
         state: restarted
         enabled: yes
-    

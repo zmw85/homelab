@@ -1,4 +1,4 @@
-- hosts: vm-ubuntu-0.home.io
+- hosts: k8s-masters
   become: yes
   gather_facts: false
   tasks:
@@ -10,7 +10,7 @@
       set_fact:
         join_command: "{{ join_command_raw.stdout_lines[0] }}"
 
-- hosts: workers
+- hosts: k8s-workers
   become: yes
   tasks:
     - name: Join cluster

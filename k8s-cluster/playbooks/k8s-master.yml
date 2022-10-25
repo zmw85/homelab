@@ -1,9 +1,11 @@
-- hosts: masters
+- hosts: k8s-masters
   become: yes
+  vars:
+    pod_network_cidr: 10.244.0.0/16
   tasks:
     - name: Initialize K8S control-plane
       shell: kubeadm init \
-        --pod-network-cidr=172.16.0.0/16 \
+        --pod-network-cidr={{ pod_network_cidr }} \
         --cri-socket unix:///var/run/cri-dockerd.sock
 
     - name: Create .kube directory
@@ -20,11 +22,9 @@
 
     - name: Install Pod network
       become: yes
-      # shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.txt
       shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
       args:
         chdir: $HOME
-        # creates: pod_network_setup.txt
 
     - name: Insure "/run/flannel/" directory exist
       file:
@@ -36,7 +36,7 @@
       copy:
         dest: "/run/flannel/subnet.env"
         content: |
-          FLANNEL_NETWORK=10.244.0.0/16
+          FLANNEL_NETWORK={{ pod_network_cidr }}
           FLANNEL_SUBNET=10.244.0.1/24
           FLANNEL_MTU=1450
           FLANNEL_IPMASQ=true

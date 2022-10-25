@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: k8s-all
   become: yes
   vars:
     k8s_version: 1.25.2-00
@@ -13,10 +13,11 @@
         regexp: "swap"
         state: absent
 
-    - name: install Docker
+    - name: install dependencies
       apt:
         name:
           - docker.io
+          - nfs-common
         state: present
 
     - name: start Docker

@@ -1,9 +1,17 @@
-[masters]
+[k8s-masters]
 vm-ubuntu-0.home.io
 
-[workers]
+[k8s-workers]
 vm-ubuntu-1.home.io
 vm-ubuntu-2.home.io
+
+[k8s-all]
+vm-ubuntu-0.home.io
+vm-ubuntu-1.home.io
+vm-ubuntu-2.home.io
+
+[nfs-servers]
+vm-ubuntu-3.home.io
 
 [all:vars]
 ansible_become_method=sudo

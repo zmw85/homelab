@@ -33,7 +33,7 @@
         dest: /etc/exports
         content: |
           {% for item in mountable_folders %}
-          {{ mountable_parent_folder }}/{{ item }} *.home.io(rw,sync,no_subtree_check)
+          {{ mountable_parent_folder }}/{{ item }} *.home.io(rw,sync,no_subtree_check,no_root_squash)
           {% endfor %}
     - name: Remove /lib/systemd/system/nfs-common.service sysmlink
       file:
@@ -57,3 +57,20 @@
         name: nfs-common
         state: restarted
         enabled: yes
+    - name: Install samba
+      become: yes
+      apt:
+        name:
+          - samba
+        state: latest
+    - name: Ensure Samba configuration
+      become: yes
+      blockinfile:
+        path: /etc/samba/smb.conf
+        backup: yes
+        block: |
+          [qbdownloads]
+            comment = Qbittorrent downloads folder
+            path = /nfs/qbittorrent/downloads
+            read only = no
+            browsable = yes

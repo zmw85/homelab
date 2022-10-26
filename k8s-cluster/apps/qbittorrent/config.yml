@@ -42,6 +42,7 @@ spec:
       nfs:
         server: vm-ubuntu-3.home.io
         path: /nfs/qbittorrent
+  restartPolicy: OnFailure
 
 ---
 apiVersion: v1

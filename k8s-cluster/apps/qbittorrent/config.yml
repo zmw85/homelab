@@ -10,9 +10,12 @@ spec:
     - name: qbittorrent
       image: lscr.io/linuxserver/qbittorrent:4.4.5
       resources:
+        requests:
+          cpu: 1
+          memory: 1Gi
         limits:
           cpu: 2
-          memory: 1Gi
+          memory: 2Gi
       ports:
         - name: web-ui
           containerPort: 8080

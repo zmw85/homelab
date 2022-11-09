@@ -1,0 +1,17 @@
+## media.persistentvolume.yml
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: plex
+  labels:
+    type: nfs
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: vm-ubuntu-3.home.io
+    path: /nfs/plex
+    readonly: false

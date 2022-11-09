@@ -1,0 +1,142 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: plex
+  labels:
+    app: plex
+spec:
+  containers:
+    - name: plex
+      image: lscr.io/linuxserver/plex:1.29.1
+      resources:
+        requests:
+          cpu: 1
+          memory: 1Gi
+        limits:
+          cpu: 3
+          memory: 2Gi
+      ports:
+        - name: pms-web
+          containerPort: 32400
+        - name: plex-companion
+          containerPort: 3005
+        - name: plex-roku
+          containerPort: 8324
+        - name: dlna-tcp
+          containerPort: 32469
+        - name: dlna-udp
+          containerPort: 1900
+          protocol: UDP
+        - name: discovery-udp
+          containerPort: 5353
+          protocol: UDP
+        - name: gdm-32410
+          containerPort: 32410
+          protocol: UDP
+        - name: gdm-32412
+          containerPort: 32412
+          protocol: UDP
+        - name: gdm-32413
+          containerPort: 32413
+          protocol: UDP
+        - name: gdm-32414
+          containerPort: 32414
+          protocol: UDP
+      volumeMounts:
+        - name: nfs-plex
+          mountPath: /config
+          subPath: config
+        - name: nfs-plex
+          mountPath: /tv
+          subPath: tv
+        - name: nfs-plex
+          mountPath: /movies
+          subPath: movies
+      env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: VERSION
+          value: docker
+  volumes:
+    - name: nfs-plex
+      nfs:
+        server: vm-ubuntu-3.home.io
+        path: /nfs/plex
+  restartPolicy: OnFailure
+
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: plex
+spec:
+  secretName: plex-certs
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  organization:
+    - home
+  commonName: plex.home.io
+  isCA: false
+  keySize: 2048
+  keyAlgorithm: rsa
+  keyEncoding: pkcs1
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    - plex.home.io
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+    group: cert-manager.io
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex-tcp
+spec:
+  clusterIP: 
+  ports:                      
+    - port: 32400
+      targetPort: 32400
+      name: pms-web
+      protocol: TCP
+    - port: 3005
+      targetPort: 3005
+      name: plex-companion
+    - port: 8324
+      name: plex-roku
+      targetPort: 8324  
+      protocol: TCP  
+    - port: 32469
+      targetPort: 32469
+      name: dlna-tcp
+      protocol: TCP
+  selector:
+    app: plex
+
+---
+apiVersion: networking.k8s.io/v1beta
+kind: Ingress
+metadata:
+  name: plex-ingress
+  annotations:
+    kubernetes.io/ingress.class: haproxy
+spec:
+  rules:
+    - host: "qb.home.io"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              serviceName: plex-service
+              servicePort: pms-web
+  tls:
+    - hosts:
+        - plex.home.io
+      secretName: plex.home.io-tls
